@@ -92,7 +92,8 @@ const BookmarkedWords = ({ user, onClose }) => {
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors duration-200"
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors duration-200 text-white hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-white/30"
+              aria-label="Close bookmarks"
             >
               <X className="w-6 h-6" />
             </button>
