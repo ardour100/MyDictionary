@@ -69,24 +69,71 @@ MyDictionary/
 - `npm run lint`: Run ESLint
 - `npm run preview`: Preview production build
 
+## Supabase Setup
+
+### Local Development (Recommended)
+For local development with full debugging capabilities:
+
+1. **Supabase is already configured locally**:
+   - Run `npx supabase start` to start local Supabase stack
+   - Database migration is automatically applied
+   - Local environment variables are pre-configured
+
+2. **Set up Google OAuth** (required for authentication):
+   - Follow the guide in `SETUP_GOOGLE_AUTH.md`
+   - Add your Google Client ID and Secret to `.env.local`
+   - Restart Supabase: `npx supabase stop && npx supabase start`
+
+3. **Access local services**:
+   - App: http://localhost:5173
+   - Supabase Studio: http://127.0.0.1:54323
+   - Email testing: http://127.0.0.1:54324
+
+### Production Setup
+For hosted Supabase (optional):
+
+1. **Create a Supabase project** at https://supabase.com
+2. **Set up Google OAuth provider** in your Supabase Auth settings
+3. **Run the database migration** by executing the SQL in `supabase_migration.sql` in your Supabase SQL Editor
+4. **Configure environment variables** in `.env.local`:
+   ```
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_production_anon_key
+   ```
+
 ## Current Features
-- Direct word lookup via Dictionary API (api.dictionaryapi.dev)
-- Responsive UI with gradient theme (pink-to-teal)
-- Loading states with spinner animation
-- Error handling and display
-- Definition display with:
+- **Word Lookup**: Direct word lookup via Dictionary API (api.dictionaryapi.dev)
+- **Google Authentication**: Sign in with Google account using Supabase Auth
+- **User Display**: Shows user name and Google avatar in top-right corner
+- **Word Bookmarking**: Save favorite words with full definitions for later reference
+- **Personal Dictionary**: View and manage bookmarked words in a dedicated interface
+- **Responsive UI**: Mobile-friendly design with gradient theme (pink-to-teal)
+- **Real-time Features**:
+  - Loading states with spinner animation
+  - Error handling and display
+  - Session persistence across browser sessions
+- **Definition Display**:
   - Parts of speech (noun, verb, etc.)
   - Multiple definitions per part of speech
   - Example sentences when available
-- Enter key search functionality
-- Search button with disabled state during loading
+- **User Interactions**:
+  - Enter key search functionality
+  - Search button with disabled state during loading
+  - Bookmark/unbookmark toggle for authenticated users
+  - User dropdown menu with profile options
 
 ## Architecture Notes
-- **Frontend-Only**: No backend, all data from external API
-- **No Persistence**: All data is ephemeral, no storage
-- **Single Component**: Main logic consolidated in App.jsx
-- **External API Dependency**: Relies on dictionaryapi.dev
-- **State Management**: Basic React hooks only
+- **Full-Stack Application**: Frontend with Supabase backend integration
+- **Data Persistence**: User bookmarks stored in Supabase PostgreSQL database
+- **Authentication**: Google OAuth via Supabase Auth
+- **Component Architecture**:
+  - Main logic in App.jsx
+  - Modular components for user display, bookmarking, and bookmark management
+- **External Dependencies**:
+  - Dictionary API (api.dictionaryapi.dev) for word definitions
+  - Supabase for authentication and data storage
+- **State Management**: React hooks with Supabase real-time subscriptions
+- **Security**: Row Level Security (RLS) policies ensure users only access their own bookmarks
 - **Responsive Design**: Mobile-friendly with Tailwind responsive classes
 
 ## API Response Structure

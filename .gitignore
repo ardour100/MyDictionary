@@ -71,3 +71,11 @@ yarn-error.log*
 # Optional cache
 .cache/
 .nyc_output/
+
+# local
+.mcp.json
+
+# Supabase
+supabase/.branches
+supabase/.temp
+supabase/logs
