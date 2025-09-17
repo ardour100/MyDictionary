@@ -7,10 +7,6 @@ const DictionaryApp = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const translations = {
-      'hello': 'hi'
-  };
-
   const fetchDefinition = async (word) => {
       try {
           const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
@@ -25,9 +21,7 @@ const DictionaryApp = () => {
       setLoading(true);
       setError("");
       setResult([]);
-
-      const translatedWord = translations[inputText.toLowerCase()] || inputText;
-      const definition = await fetchDefinition(translatedWord);
+      const definition = await fetchDefinition(inputText.trim());
 
       if (definition) {
           setResult(definition.meanings);
