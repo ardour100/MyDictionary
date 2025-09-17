@@ -11,6 +11,7 @@ yarn.lock
 # local env files
 .env
 .env.*.local
+.env.*.prod
 
 # build output
 dist/
