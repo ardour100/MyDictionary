@@ -1,15 +1,33 @@
-import React, { useState } from "react";
-import { Search, BookOpen, Loader2, AlertCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Search, BookOpen, Loader2, AlertCircle, LogIn } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "./lib/supabase";
+import UserDisplay from "./components/UserDisplay";
+import BookmarkButton from "./components/BookmarkButton";
+import BookmarkedWords from "./components/BookmarkedWords";
 
 const DictionaryApp = () => {
   const [inputText, setInputText] = useState("");
   const [results, setResult] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [user, setUser] = useState(null);
+  const [showBookmarks, setShowBookmarks] = useState(false);
 
-  const translations = {
-      'hello': 'hi'
-  };
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const fetchDefinition = async (word) => {
       try {
@@ -25,9 +43,7 @@ const DictionaryApp = () => {
       setLoading(true);
       setError("");
       setResult([]);
-
-      const translatedWord = translations[inputText.toLowerCase()] || inputText;
-      const definition = await fetchDefinition(translatedWord);
+      const definition = await fetchDefinition(inputText.trim());
 
       if (definition) {
           setResult(definition.meanings);
@@ -44,20 +60,64 @@ const DictionaryApp = () => {
       }
   }
 
+  const handleGoogleSignIn = async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      alert('Supabase is not configured. Please set up your Supabase project and update the environment variables.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      });
+      if (error) {
+        console.error('Error signing in with Google:', error);
+      }
+    } catch (err) {
+      console.error('Error signing in:', err);
+    }
+  };
+
   return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-teal-50 p-4 md:p-8">
           <div className="max-w-4xl mx-auto">
               {/* Header */}
-              <div className="text-center mb-12">
-                  <div className="flex items-center justify-center mb-4">
-                      <div className="bg-teal-400 p-3 rounded-full shadow-lg">
-                          <BookOpen className="w-8 h-8 text-white" />
-                      </div>
+              <div className="relative mb-12">
+                  {/* User Display / Login Button */}
+                  <div className="absolute top-0 right-0">
+                      {isSupabaseConfigured ? (
+                          user ? (
+                              <UserDisplay
+                                  user={user}
+                                  onShowBookmarks={() => setShowBookmarks(true)}
+                              />
+                          ) : (
+                              <button
+                                  onClick={handleGoogleSignIn}
+                                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-teal-200 hover:border-teal-400 hover:shadow-md transition-all duration-300 text-gray-700 font-medium"
+                              >
+                                  <LogIn className="w-4 h-4 text-teal-500" />
+                                  Sign in with Google
+                              </button>
+                          )
+                      ) : (
+                          <div className="px-4 py-2 bg-yellow-100 border border-yellow-300 rounded-xl text-yellow-800 text-sm">
+                              Supabase not configured
+                          </div>
+                      )}
                   </div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-teal-400 to-teal-600 bg-clip-text text-transparent mb-2">
-                      Dictionary Explorer
-                  </h1>
-                  <p className="text-gray-600 text-lg">Discover the meaning of words</p>
+
+                  <div className="text-center">
+                      <div className="flex items-center justify-center mb-4">
+                          <div className="bg-teal-400 p-3 rounded-full shadow-lg">
+                              <BookOpen className="w-8 h-8 text-white" />
+                          </div>
+                      </div>
+                      <h1 className="text-4xl font-bold bg-gradient-to-r from-teal-400 to-teal-600 bg-clip-text text-transparent mb-2">
+                          Dictionary Explorer
+                      </h1>
+                      <p className="text-gray-600 text-lg">Discover the meaning of words</p>
+                  </div>
               </div>
 
               {/* Search Section */}
@@ -109,7 +169,16 @@ const DictionaryApp = () => {
               {/* Results */}
               {results.length > 0 && (
                   <div className="space-y-6">
-                      <h2 className="text-2xl font-bold text-gray-800 mb-6">Definition Results</h2>
+                      <div className="flex items-center justify-between mb-6">
+                          <h2 className="text-2xl font-bold text-gray-800">Definition Results</h2>
+                          {user && (
+                              <BookmarkButton
+                                  word={inputText.trim()}
+                                  definitionData={{ meanings: results }}
+                                  user={user}
+                              />
+                          )}
+                      </div>
                       {results.map((result, index) => (
                           <div 
                               key={index} 
@@ -151,6 +220,14 @@ const DictionaryApp = () => {
                       <h3 className="text-xl font-semibold text-gray-600 mb-2">Ready to explore?</h3>
                       <p className="text-gray-500">Enter a word above to get started with your search.</p>
                   </div>
+              )}
+
+              {/* Bookmarked Words Modal */}
+              {showBookmarks && (
+                  <BookmarkedWords
+                      user={user}
+                      onClose={() => setShowBookmarks(false)}
+                  />
               )}
           </div>
       </div>
