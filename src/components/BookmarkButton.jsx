@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-const BookmarkButton = ({ word, definitionData, user }) => {
+const BookmarkButton = ({ word, definitionData, translations, user }) => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -53,12 +53,17 @@ const BookmarkButton = ({ word, definitionData, user }) => {
         setIsBookmarked(false);
       } else {
         // Add bookmark
+        const enhancedDefinitionData = {
+          ...definitionData,
+          translations: translations
+        };
+
         const { error } = await supabase
           .from('bookmarked_words')
           .insert({
             user_id: user.id,
             word: word.toLowerCase(),
-            definition_data: definitionData
+            definition_data: enhancedDefinitionData
           });
 
         if (error) {

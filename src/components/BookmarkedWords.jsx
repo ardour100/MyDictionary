@@ -162,20 +162,30 @@ const BookmarkedWords = ({ user, onClose }) => {
                     </span>
 
                     <div className="space-y-4">
-                      {meaning.definitions?.map((definition, defIndex) => (
-                        <div key={defIndex} className="border-l-4 border-teal-200 pl-6 py-2">
-                          <p className="text-gray-800 text-lg leading-relaxed mb-3">
-                            {definition.definition}
-                          </p>
-                          {definition.example && (
-                            <div className="bg-gradient-to-r from-pink-50 to-teal-50 rounded-lg p-4 border border-pink-100">
-                              <p className="text-gray-600 italic text-base">
-                                <span className="font-semibold text-teal-600">Example:</span> {definition.example}
+                      {meaning.definitions?.map((definition, defIndex) => {
+                        const translationKey = `${index}-${defIndex}`;
+                        const chineseTranslation = selectedWord.definition_data.translations?.[translationKey];
+
+                        return (
+                          <div key={defIndex} className="border-l-4 border-teal-200 pl-6 py-2">
+                            <p className="text-gray-800 text-lg leading-relaxed mb-2">
+                              {definition.definition}
+                            </p>
+                            {chineseTranslation && (
+                              <p className="text-gray-600 text-base leading-relaxed mb-3 pl-4 border-l-2 border-gray-200">
+                                {chineseTranslation}
                               </p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                            )}
+                            {definition.example && (
+                              <div className="bg-gradient-to-r from-pink-50 to-teal-50 rounded-lg p-4 border border-pink-100">
+                                <p className="text-gray-600 italic text-base">
+                                  <span className="font-semibold text-teal-600">Example:</span> {definition.example}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
