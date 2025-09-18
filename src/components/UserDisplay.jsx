@@ -31,25 +31,22 @@ const UserDisplay = ({ user, onShowBookmarks }) => {
     <div className="relative">
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-3 p-2 rounded-xl bg-white/80 backdrop-blur-sm border border-teal-100 hover:bg-white hover:shadow-md transition-all duration-300"
+        className="p-1 rounded-full bg-white/80 backdrop-blur-sm border border-teal-100 hover:bg-white hover:shadow-md transition-all duration-300"
       >
         {avatarUrl && !imageError ? (
           <img
             src={avatarUrl}
             alt={displayName}
-            className="w-8 h-8 rounded-full object-cover"
+            className="w-10 h-10 rounded-full object-cover"
             onError={() => setImageError(true)}
             referrerPolicy="no-referrer"
             crossOrigin="anonymous"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-teal-400 to-teal-500 flex items-center justify-center">
-            <User className="w-4 h-4 text-white" />
+          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-teal-400 to-teal-500 flex items-center justify-center">
+            <User className="w-5 h-5 text-white" />
           </div>
         )}
-        <span className="text-gray-700 font-medium text-sm max-w-32 truncate">
-          {displayName}
-        </span>
       </button>
 
       {showDropdown && (

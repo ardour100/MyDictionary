@@ -3,7 +3,7 @@ import { Search, BookOpen, Loader2, AlertCircle, LogIn } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import UserDisplay from "./components/UserDisplay";
 import BookmarkButton from "./components/BookmarkButton";
-import BookmarkedWords from "./components/BookmarkedWords";
+import BookmarksPage from "./components/BookmarksPage";
 
 const DictionaryApp = () => {
   const [inputText, setInputText] = useState("");
@@ -11,7 +11,7 @@ const DictionaryApp = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
-  const [showBookmarks, setShowBookmarks] = useState(false);
+  const [currentPage, setCurrentPage] = useState('dictionary'); // 'dictionary' or 'bookmarks'
   const [translations, setTranslations] = useState({});
 
   useEffect(() => {
@@ -111,6 +111,16 @@ const DictionaryApp = () => {
     }
   };
 
+  // Show bookmarks page if selected
+  if (currentPage === 'bookmarks') {
+    return (
+      <BookmarksPage
+        user={user}
+        onBack={() => setCurrentPage('dictionary')}
+      />
+    );
+  }
+
   return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-teal-50">
           <div className="w-full max-w-none lg:max-w-full mx-auto p-2 sm:p-4 lg:p-6 xl:p-8">
@@ -122,7 +132,7 @@ const DictionaryApp = () => {
                           user ? (
                               <UserDisplay
                                   user={user}
-                                  onShowBookmarks={() => setShowBookmarks(true)}
+                                  onShowBookmarks={() => setCurrentPage('bookmarks')}
                               />
                           ) : (
                               <button
@@ -267,13 +277,6 @@ const DictionaryApp = () => {
                   </div>
               )}
 
-              {/* Bookmarked Words Modal */}
-              {showBookmarks && (
-                  <BookmarkedWords
-                      user={user}
-                      onClose={() => setShowBookmarks(false)}
-                  />
-              )}
           </div>
       </div>
   )
