@@ -12,6 +12,7 @@ const DictionaryApp = () => {
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
   const [showBookmarks, setShowBookmarks] = useState(false);
+  const [translations, setTranslations] = useState({});
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -35,6 +36,22 @@ const DictionaryApp = () => {
           const data = await response.json();
           return data[0];
       } catch (err) {
+          console.error('Error fetching definition:', err);
+          return null;
+      }
+  }
+
+  const translateToChinese = async (text) => {
+      try {
+          // Using Google Translate API through a public endpoint
+          const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|zh`);
+          const data = await response.json();
+          if (data.responseStatus === 200) {
+              return data.responseData.translatedText;
+          }
+          return null;
+      } catch (err) {
+          console.error('Error translating to Chinese:', err);
           return null;
       }
   }
@@ -43,10 +60,26 @@ const DictionaryApp = () => {
       setLoading(true);
       setError("");
       setResult([]);
+      setTranslations({});
       const definition = await fetchDefinition(inputText.trim());
 
       if (definition) {
           setResult(definition.meanings);
+
+          // Fetch Chinese translations for all definitions
+          const newTranslations = {};
+          for (let meaningIndex = 0; meaningIndex < definition.meanings.length; meaningIndex++) {
+              const meaning = definition.meanings[meaningIndex];
+              for (let defIndex = 0; defIndex < meaning.definitions.length; defIndex++) {
+                  const def = meaning.definitions[defIndex];
+                  const key = `${meaningIndex}-${defIndex}`;
+                  const translation = await translateToChinese(def.definition);
+                  if (translation) {
+                      newTranslations[key] = translation;
+                  }
+              }
+          }
+          setTranslations(newTranslations);
       } else {
           setError("No definition found for the word.");
       }
@@ -191,20 +224,30 @@ const DictionaryApp = () => {
                               </div>
                               
                               <div className="space-y-4">
-                                  {result.definitions.map((definition, defIndex) => (
-                                      <div key={defIndex} className="border-l-4 border-teal-200 pl-6 py-2">
-                                          <p className="text-gray-800 text-lg leading-relaxed mb-3">
-                                              {definition.definition}
-                                          </p>
-                                          {definition.example && (
-                                              <div className="bg-gradient-to-r from-pink-50 to-teal-50 rounded-lg p-4 border border-pink-100">
-                                                  <p className="text-gray-600 italic text-base">
-                                                      <span className="font-semibold text-teal-600">Example:</span> {definition.example}
+                                  {result.definitions.map((definition, defIndex) => {
+                                      const translationKey = `${index}-${defIndex}`;
+                                      const chineseTranslation = translations[translationKey];
+
+                                      return (
+                                          <div key={defIndex} className="border-l-4 border-teal-200 pl-6 py-2">
+                                              <p className="text-gray-800 text-lg leading-relaxed mb-2">
+                                                  {definition.definition}
+                                              </p>
+                                              {chineseTranslation && (
+                                                  <p className="text-gray-600 text-base leading-relaxed mb-3 pl-4 border-l-2 border-gray-200">
+                                                      {chineseTranslation}
                                                   </p>
-                                              </div>
-                                          )}
-                                      </div>
-                                  ))}
+                                              )}
+                                              {definition.example && (
+                                                  <div className="bg-gradient-to-r from-pink-50 to-teal-50 rounded-lg p-4 border border-pink-100">
+                                                      <p className="text-gray-600 italic text-base">
+                                                          <span className="font-semibold text-teal-600">Example:</span> {definition.example}
+                                                      </p>
+                                                  </div>
+                                              )}
+                                          </div>
+                                      );
+                                  })}
                               </div>
                           </div>
                       ))}
