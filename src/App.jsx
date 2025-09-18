@@ -209,6 +209,7 @@ const DictionaryApp = () => {
                               <BookmarkButton
                                   word={inputText.trim()}
                                   definitionData={{ meanings: results }}
+                                  translations={translations}
                                   user={user}
                               />
                           )}
