@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, BookOpen, Clock, Trash2, ChevronLeft, ChevronRight, ArrowUpDown, SortAsc, SortDesc } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Trash2, ChevronLeft, ChevronRight, ArrowUpDown, SortAsc, SortDesc, ChevronDown, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const BookmarksPage = ({ user, onBack }) => {
@@ -10,6 +10,7 @@ const BookmarksPage = ({ user, onBack }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('created_at'); // 'created_at' or 'word'
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
+  const [expandedMobile, setExpandedMobile] = useState({}); // Track expanded states on mobile
 
   const itemsPerPage = 10;
 
@@ -117,6 +118,13 @@ const BookmarksPage = ({ user, onBack }) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
+  const toggleMobileExpansion = (bookmarkId) => {
+    setExpandedMobile(prev => ({
+      ...prev,
+      [bookmarkId]: !prev[bookmarkId]
+    }));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-teal-50">
@@ -201,46 +209,113 @@ const BookmarksPage = ({ user, onBack }) => {
         ) : (
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Bookmarks List */}
-            <div className="lg:w-1/2">
+            <div className="w-full lg:w-1/2">
               <div className="bg-white rounded-2xl shadow-xl border border-teal-100">
                 <div className="p-4 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-800">
+                  <h2 className="text-lg font-semibold text-gray-800 text-center">
                     Page {currentPage} of {totalPages}
                   </h2>
                 </div>
                 <div className="p-4 space-y-2">
-                  {currentBookmarks.map((bookmark) => (
-                    <div
-                      key={bookmark.id}
-                      className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer group ${
-                        selectedWord?.id === bookmark.id
-                          ? 'bg-teal-50 border-teal-200'
-                          : 'bg-white border-gray-200 hover:border-teal-200 hover:bg-teal-50'
-                      }`}
-                      onClick={() => setSelectedWord(bookmark)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-800 capitalize text-lg">
-                            {bookmark.word}
-                          </h3>
-                          <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                            <Clock className="w-3 h-3" />
-                            {formatDate(bookmark.created_at)}
+                  {currentBookmarks.map((bookmark) => {
+                    const isExpanded = expandedMobile[bookmark.id];
+                    const hasTranslations = bookmark.definition_data.translations && Object.keys(bookmark.definition_data.translations).length > 0;
+
+
+                    return (
+                      <div
+                        key={bookmark.id}
+                        className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer group ${
+                          selectedWord?.id === bookmark.id
+                            ? 'bg-teal-50 border-teal-200'
+                            : 'bg-white border-gray-200 hover:border-teal-200 hover:bg-teal-50'
+                        }`}
+                        onClick={() => setSelectedWord(bookmark)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-800 capitalize text-lg">
+                              {bookmark.word}
+                            </h3>
+                            <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                              <Clock className="w-3 h-3" />
+                              {formatDate(bookmark.created_at)}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {/* Mobile Triangle Icon - always show on mobile */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleMobileExpansion(bookmark.id);
+                              }}
+                              className="lg:hidden p-2 hover:bg-teal-100 rounded-full text-teal-600 transition-all duration-200"
+                            >
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRightIcon className="w-4 h-4" />
+                              )}
+                            </button>
+
+                            {/* Delete Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeBookmark(bookmark.id);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-100 rounded-full text-red-500 transition-all duration-200"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeBookmark(bookmark.id);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-100 rounded-full text-red-500 transition-all duration-200"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+
+                        {/* Mobile Expanded Definitions - only show on mobile when expanded */}
+                        {isExpanded && (
+                          <div className="lg:hidden mt-4 pt-4 border-t border-gray-200 animate-in slide-in-from-top-2 duration-200">
+                            <h4 className="text-lg font-bold text-gray-800 mb-4 capitalize">{bookmark.word}</h4>
+
+                            {bookmark.definition_data.meanings?.map((meaning, index) => (
+                              <div key={index} className="mb-6">
+                                <span className="inline-block bg-gradient-to-r from-teal-400 to-teal-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide mb-3">
+                                  {meaning.partOfSpeech}
+                                </span>
+
+                                <div className="space-y-3">
+                                  {meaning.definitions?.map((definition, defIndex) => {
+                                    const translationKey = `${index}-${defIndex}`;
+                                    const chineseTranslation = bookmark.definition_data.translations?.[translationKey];
+
+                                    return (
+                                      <div key={defIndex} className="border-l-3 border-teal-200 pl-4 py-2">
+                                        <p className="text-gray-800 text-base leading-relaxed mb-2">
+                                          {definition.definition}
+                                        </p>
+                                        {chineseTranslation && (
+                                          <p className="text-gray-600 text-sm leading-relaxed mb-3 pl-3 border-l-2 border-gray-200">
+                                            {chineseTranslation}
+                                          </p>
+                                        )}
+                                        {definition.example && (
+                                          <div className="bg-gradient-to-r from-pink-50 to-teal-50 rounded-lg p-3 border border-pink-100 mt-2">
+                                            <p className="text-gray-600 italic text-sm">
+                                              <span className="font-semibold text-teal-600">Example:</span> {definition.example}
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Pagination */}
@@ -261,7 +336,7 @@ const BookmarksPage = ({ user, onBack }) => {
                           <button
                             key={page}
                             onClick={() => goToPage(page)}
-                            className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                            className={`w-10 h-10 rounded-lg font-medium transition-colors flex items-center justify-center ${
                               page === currentPage
                                 ? 'bg-teal-500 text-white'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -286,8 +361,8 @@ const BookmarksPage = ({ user, onBack }) => {
               </div>
             </div>
 
-            {/* Definition Display */}
-            <div className="lg:w-1/2">
+            {/* Definition Display - Hidden on Mobile */}
+            <div className="hidden lg:block lg:w-1/2">
               <div className="bg-white rounded-2xl shadow-xl border border-teal-100 min-h-[600px]">
                 {selectedWord ? (
                   <div className="p-6">
@@ -305,17 +380,21 @@ const BookmarksPage = ({ user, onBack }) => {
                           {meaning.definitions?.map((definition, defIndex) => {
                             const translationKey = `${index}-${defIndex}`;
                             const chineseTranslation = selectedWord.definition_data.translations?.[translationKey];
+                            const mobileKey = `${selectedWord.id}-${index}-${defIndex}`;
+                            const isExpanded = expandedMobile[mobileKey];
 
                             return (
                               <div key={defIndex} className="border-l-4 border-teal-200 pl-6 py-2">
                                 <p className="text-gray-800 text-lg leading-relaxed mb-2">
                                   {definition.definition}
                                 </p>
+
                                 {chineseTranslation && (
                                   <p className="text-gray-600 text-base leading-relaxed mb-3 pl-4 border-l-2 border-gray-200">
                                     {chineseTranslation}
                                   </p>
                                 )}
+
                                 {definition.example && (
                                   <div className="bg-gradient-to-r from-pink-50 to-teal-50 rounded-lg p-4 border border-pink-100">
                                     <p className="text-gray-600 italic text-base">
@@ -331,7 +410,7 @@ const BookmarksPage = ({ user, onBack }) => {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="flex items-center justify-center h-full text-gray-500 min-h-[600px]">
                     <div className="text-center">
                       <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                       <p className="text-lg">Select a word to view its definition</p>
