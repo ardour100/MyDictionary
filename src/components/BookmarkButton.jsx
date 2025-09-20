@@ -18,15 +18,14 @@ const BookmarkButton = ({ word, definitionData, translations, user }) => {
         .from('bookmarked_words')
         .select('id')
         .eq('user_id', user.id)
-        .eq('word', word.toLowerCase())
-        .single();
+        .eq('word', word.toLowerCase());
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error checking bookmark:', error);
         return;
       }
 
-      setIsBookmarked(!!data);
+      setIsBookmarked(data && data.length > 0);
     } catch (err) {
       console.error('Error checking bookmark:', err);
     }
