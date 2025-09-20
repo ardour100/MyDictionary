@@ -66,19 +66,28 @@ const DictionaryApp = () => {
       if (definition) {
           setResult(definition.meanings);
 
-          // Fetch Chinese translations for all definitions
-          const newTranslations = {};
+          // Fetch Chinese translations for all definitions in parallel
+          const translationPromises = [];
+          const translationKeys = [];
+
           for (let meaningIndex = 0; meaningIndex < definition.meanings.length; meaningIndex++) {
               const meaning = definition.meanings[meaningIndex];
               for (let defIndex = 0; defIndex < meaning.definitions.length; defIndex++) {
                   const def = meaning.definitions[defIndex];
                   const key = `${meaningIndex}-${defIndex}`;
-                  const translation = await translateToChinese(def.definition);
-                  if (translation) {
-                      newTranslations[key] = translation;
-                  }
+                  translationKeys.push(key);
+                  translationPromises.push(translateToChinese(def.definition));
               }
           }
+
+          // Wait for all translations to complete
+          const translationResults = await Promise.all(translationPromises);
+          const newTranslations = {};
+          translationResults.forEach((translation, index) => {
+              if (translation) {
+                  newTranslations[translationKeys[index]] = translation;
+              }
+          });
           setTranslations(newTranslations);
       } else {
           setError("No definition found for the word.");
